@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAG Exams Practice Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .custom-radio:checked + label {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        /* 🖨️ Clean PDF Layout Configuration */
+        @media print {
+            body {
+                background-color: #ffffff;
+                color: #000000;
+                text-align: left !important;
+            }
+            header, footer, .print\:hidden, button {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                display: block !important; /* Disables flex-centered layout on print */
+                text-align: left !important;
+            }
+            #result-screen, #review-container, .border-b {
+                text-align: left !important;
+            }
+            .bg-white {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .border-b {
+                border-bottom: 1px solid #e5e7eb !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-blue-900 text-white shadow-md py-4 px-6 sticky top-0 z-10 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-wide">CAG EXAM PRACTICE PORTAL</h1>
+            
+            <div id="header-metadata">
+                <p class="text-xs text-blue-200">Live Mock Test with Negative Marking</p>
+                <p class="text-xs text-yellow-400 font-bold">By AFTAB ALAM KHAN, Assistant Audit Officer</p>
+            </div>
+        </div>
+        
+        <div id="header-controls" class="hidden flex items-center gap-3 mx-4">
+            <button id="prev-btn" onclick="prevQuestion()" class="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-blue-950 text-xs font-bold rounded shadow border border-amber-200 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
+                &larr; Previous
+            </button>
+            <button id="next-btn" onclick="nextQuestion()" class="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-blue-950 text-xs font-black rounded shadow transition cursor-pointer">
+                Save & Next &rarr;
+            </button>
+            <button id="review-btn" onclick="toggleMarkForReview()" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded shadow transition cursor-pointer">
+                ⭐ Mark for Review
+            </button>
+            <button id="submit-btn" onclick="endQuiz()" class="hidden px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded shadow transition cursor-pointer">
+                Submit Test
+            </button>
+        </div>
+
+        <div id="timer-box" class="bg-blue-800 border border-blue-700 px-4 py-2 rounded-lg text-center font-mono hidden">
+            <span class="text-xs text-blue-300 block uppercase tracking-wider">Time Left</span>
+            <span id="timer" class="text-xl font-bold text-yellow-400">02:00:00</span>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+        
+        <div id="login-screen" class="max-w-md w-full mx-auto bg-white rounded-xl shadow-md border border-gray-100 p-6 md:p-8">
+            <div class="text-center mb-6">
+                <h2 id="login-screen-exam-title" class="text-xl font-black text-blue-900 uppercase tracking-tight"></h2>
+                <p id="login-screen-exam-sub" class="text-xs font-semibold text-blue-600 mt-0.5 mb-4"></p>
+                
+                <hr class="border-gray-100 my-3">
+                <h3 class="text-lg font-bold text-gray-800">Candidate Login</h3>
+                <p class="text-sm text-gray-500 mt-1">Please enter your credentials to begin the CBT mock assessment.</p>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Candidate Full Name</label>
+                    <input type="text" id="student-name" placeholder="Enter your full name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Roll Number / Student ID</label>
+                    <input type="text" id="student-roll" placeholder="Enter your roll number" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-xs text-amber-800 space-y-1 mb-6">
+                <strong class="text-amber-900 block font-bold mb-1">Instructions for Candidate:</strong>
+                <p>• The test contains dynamic multiple choice questions based on the syllabus of Revenue Audit Exam - 2.</p>
+                <p>• Total Duration allocated is 15 minutes.</p>
+                <p>• Negative marking scheme of 0.25 marks applies to all wrong choices.</p>
+                <p>• Do not close or refresh the browser interface during active testing.</p>
+            </div>
+
+            <button onclick="startAssessment()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow transition text-center cursor-pointer">
+                Sign In & Begin Test
+            </button>
+        </div>
+
+        <div id="main-layout" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
+            
+            <div id="quiz-screen" class="lg:col-span-3 bg-white rounded-xl shadow-md p-6 border border-gray-100 flex flex-col justify-between">
+                <div>
+                    <div class="w-full bg-gray-200 h-2 rounded-full mb-6">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 5%;"></div>
+                    </div>
+
+                    <div class="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2">
+                        Question <span id="current-q-num">1</span> of <span id="total-q-num">22</span>
+                    </div>
+
+                    <h2 id="question-text" class="text-lg md:text-xl font-bold text-gray-800 mb-6 whitespace-pre-line">
+                        Loading question data...
+                    </h2>
+
+                    <div id="options-container" class="space-y-3 mb-4">
+                    </div>
+                </div>
+            </div>
+
+            <div id="status-panel" class="lg:col-span-1 bg-white rounded-xl shadow-md p-4 border border-gray-100 h-fit space-y-4">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Assessment Matrix</h3>
+                    
+                    <div id="question-grid" class="grid grid-cols-5 gap-2 mb-4">
+                    </div>
+
+                    <div class="space-y-1.5 text-xs pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-emerald-500 block"></span>
+                            <span class="text-gray-600 font-medium">Answered</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-amber-500 block"></span>
+                            <span class="text-gray-600 font-medium">Marked for Review</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3.5 h-3.5 rounded bg-blue-100 border border-blue-300 block"></span>
+                            <span class="text-gray-600 font-medium">Unattempted</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-4">
+                    <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Live Progress Summary</h4>
+                    <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-xs space-y-2.5 font-medium text-gray-700">
+                        <div class="flex justify-between items-center">
+                            <span>Total No. of Questions:</span>
+                            <span id="summary-total" class="font-bold text-gray-900 bg-gray-200 px-2 py-0.5 rounded">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Number of Questions attempted:</span>
+                            <span id="summary-attempted" class="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Number of Questions Marked for Review:</span>
+                            <span id="summary-review" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>No. of Questions not answered:</span>
+                            <span id="summary-unanswered" class="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       <div id="result-screen" class="hidden space-y-6 text-left">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-1">CPD-I Practice Scorecard</h2>
+                    <p id="candidate-meta" class="text-blue-700 font-medium text-sm mb-4"></p>
+                    <p class="text-gray-500 text-xs">Calculated using standardized 0.25 negative marking penalty constraints.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-3xl mx-auto text-center">
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <span class="text-xs text-blue-600 font-bold uppercase block">Net Score</span>
+                        <span id="score-val" class="text-2xl font-black text-blue-900">0.00</span>
+                    </div>
+                    <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                        <span class="text-xs text-emerald-600 font-bold uppercase block">Correct (+1)</span>
+                        <span id="correct-val" class="text-2xl font-bold text-emerald-800">0</span>
+                    </div>
+                    <div class="bg-rose-50 p-4 rounded-lg border border-rose-100">
+                        <span class="text-xs text-rose-600 font-bold uppercase block">Wrong (-0.25)</span>
+                        <span id="incorrect-val" class="text-2xl font-bold text-rose-800">0</span>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                        <span class="text-xs text-amber-600 font-bold uppercase block">Left (0)</span>
+                        <span id="unanswered-val" class="text-2xl font-bold text-amber-800">0</span>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 col-span-2 md:col-span-1">
+                        <span class="text-xs text-gray-600 font-bold uppercase block">Accuracy</span>
+                        <span id="accuracy-val" class="text-2xl font-bold text-gray-800">0%</span>
+                    </div>
+                </div>
+
+                <!-- 🎯 Cleaned up Control Row: Centered wrapper prevents inheritance issues -->
+                <div class="flex flex-wrap justify-center gap-4 mt-8 print:hidden">
+                    <button onclick="window.location.reload()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg text-sm transition shadow-sm cursor-pointer">
+                        Restart the Test
+                    </button>
+                    <button onclick="window.print()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-sm transition shadow-sm cursor-pointer flex items-center gap-2">
+                        📥 Download PDF Solution Ledger
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 text-left">
+                <h3 class="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4">Detailed Solutions & Review Ledger</h3>
+                <div id="review-container" class="space-y-6">
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-800 text-gray-400 py-4 text-center text-xs border-t border-gray-700 mt-auto">
+        &copy; 2026 Interactive Assessment Engine. Designed by Aftab Alam Khan, AAO for Competitive Examination Practice.
+    </footer>
+
+    <script>
+        // ==========================================
+        // 🏷️ ASSESSMENT BRAND CONFIGURATION (EDIT HERE)
+        // ==========================================
+        const examMainTitle = "CONTINUOUS PROFESSIONAL DEVELOPMENT EXAMINATION (CPD-I)";
+        const examPaperSubtext = "C-1: Financial Management (100 Marks)";
+
+        let quizData = [
+            {
+        "question": "Which type of financial statement analysis compares line items across multiple consecutive accounting periods to identify growth or decline trends?",
+        "options": [
+            "Vertical Analysis",
+            "Horizontal Analysis",
+            "Ratio Analysis",
+            "Static Analysis"
+        ],
+        "correct": 1,
+        "explanation": "Horizontal analysis (also known as trend analysis) evaluates financial data sequentially over time, allowing analysts to see the direction and percentage change of metrics like revenue or profit across multiple years."
+    },
+            {
+        "question": "What is the standard accounting formula used to calculate the Current Ratio?",
+        "options": [
+            "Quick Assets / Current Liabilities",
+            "Current Assets - Current Liabilities",
+            "Current Assets / Current Liabilities",
+            "Total Assets / Total Liabilities"
+        ],
+        "correct": 2,
+        "explanation": "The Current Ratio is a fundamental liquidity metric calculated by dividing Total Current Assets by Total Current Liabilities to check short-term obligation coverage."
+    },
+    {
+        "question": "Which of the following is considered a non-cash expense and is added back to Net Profit when preparing a Cash Flow Statement under the indirect method?",
+        "options": [
+            "Payment of Dividends",
+            "Purchase of Inventory",
+            "Depreciation",
+            "Repayment of Loan Principal"
+        ],
+        "correct": 2,
+        "explanation": "Depreciation is an internal accounting allocation that reduces net bookkeeping profit but involves no actual physical outflow of cash, requiring it to be added back to reconcile operating cash."
+    },
+    {
+        "question": "In a traditional Funds Flow Statement, the term 'Funds' primarily refers to which of the following?",
+        "options": [
+            "Cash in Hand only",
+            "Net Working Capital",
+            "Gross Fixed Assets",
+            "Total Long-term Debt"
+        ],
+        "correct": 1,
+        "explanation": "Traditional funds flow analysis operates on a working capital basis, defining 'funds' as Net Working Capital (Current Assets minus Current Liabilities)."
+    },
+    {
+        "question": "Under which activity of a standard Cash Flow Statement would the cash purchase of new office furniture be classified?",
+        "options": [
+            "Operating Activities",
+            "Investing Activities",
+            "Financing Activities",
+            "Administrative Activities"
+        ],
+        "correct": 1,
+        "explanation": "The acquisition and disposal of long-term productive fixed assets, property, plant, and equipment fall directly under Investing Activities."
+    },
+    {
+        "question": "If a firm has a Current Ratio of 2.5:1 and uses its cash to pay off a portion of its outstanding Trade Payables, what happens to the Current Ratio?",
+        "options": [
+            "It will decrease.",
+            "It will increase.",
+            "It will remain unchanged.",
+            "It drops to zero."
+        ],
+        "correct": 1,
+        "explanation": "Because the starting ratio is greater than 1:1, subtracting an equal amount from both the numerator (Current Assets) and the denominator (Current Liabilities) results in a higher final fraction."
+    },
+    {
+        "question": "Which of the following items must be subtracted from Current Assets to calculate Quick (Acid-Test) Assets?",
+        "options": [
+            "Trade Receivables and Cash Equivalents",
+            "Inventories and Prepaid Expenses",
+            "Short-term Marketable Securities",
+            "Trade Payables and Provisions"
+        ],
+        "correct": 1,
+        "explanation": "Inventories take longer to cycle into cash, and prepaid expenses cannot be reconverted into liquid cash to pay off unexpected short-term debts; thus, both are excluded from immediate quick assets."
+    },
+    {
+        "question": "A company has an Interest Coverage Ratio of 0.8. What does this suggest about the firm's financial health?",
+        "options": [
+            "The firm's operating profits are more than adequate to pay its interest expenses.",
+            "The firm is entirely funded by equity capital and carries no financial leverage.",
+            "The firm's operating profit (EBIT) is insufficient to cover its fixed interest obligations.",
+            "The firm is utilizing its inventory highly efficiently to cycle cash."
+        ],
+        "correct": 2,
+        "explanation": "An Interest Coverage Ratio below 1.0 indicates that Earnings Before Interest and Taxes (EBIT) are less than the required fixed interest expenses, signaling potential debt default risks."
+    },
+    {
+        "question": "What type of reporting structure is used when a financial statement converts every absolute line item into a percentage relative to a single common baseline within the same period?",
+        "options": [
+            "Comparative Statement",
+            "Trend Percentage Statement",
+            "Common-Size Statement",
+            "Funds Flow Summary"
+        ],
+        "correct": 2,
+        "explanation": "Common-size analysis simplifies vertical comparisons by changing raw figures into percentages relative to a base item (such as Net Sales on an Income Statement or Total Assets on a Balance Sheet)."
+    },
+    {
+        "question": "Where should cash paid out for corporate stock dividends to shareholders be categorized in a standard Cash Flow Statement?",
+        "options": [
+            "An outflow under Operating Activities",
+            "An outflow under Investing Activities",
+            "An outflow under Financing Activities",
+            "A non-cash reconciliation adjustment"
+        ],
+        "correct": 2,
+        "explanation": "Dividend distributions represent the cash cost of servicing and rewarding the providers of the company's equity capital structure, placing it under Financing Activities."
+    },
+    {
+        "question": "Which of the following best describes the concept of 'Time Preference for Money'?",
+        "options": [
+            "An individual's preference to possess a given amount of money now rather than an equal amount at a future date.",
+            "The preference of corporate entities to defer cash outflows as long as possible to minimize working capital cycle pressures.",
+            "The tendency of commercial banks to adjust lending rates dynamically based on the maturity duration of the underlying loan instrument.",
+            "The mandate requiring financial institutions to discount future values solely based on statutory government bond yields."
+        ],
+        "correct": 0,
+        "explanation": "Money available today has greater utility due to consumption preferences, immediate investment opportunities, and inflation risks. Thus, individuals prefer current liquidity over an identical amount in the future."
+    },
+    {
+        "question": "What is the primary operational distinction between an 'Ordinary Annuity' and an 'Annuity Due'?",
+        "options": [
+            "Payments in an ordinary annuity are variable, whereas payments in an annuity due are fixed.",
+            "Ordinary annuity payments occur at the end of each period, while annuity due payments occur at the beginning of each period.",
+            "Ordinary annuities apply exclusively to cash inflows, while annuities due apply strictly to cash outflows.",
+            "Annuity due calculations completely disregard the impact of compounding interest frequencies."
+        ],
+        "correct": 1,
+        "explanation": "An annuity due requires cash flows at the inception (beginning) of each compounding block, meaning each payment is discounted or compounded for one extra period compared to an ordinary annuity where payments occur at the end."
+    },
+    {
+        "question": "As the compounding frequency within a single financial year increases (e.g., shifting from annual to semi-annual or quarterly compounding), what happens to the Future Value of a fixed initial deposit?",
+        "options": [
+            "The Future Value increases.",
+            "The Future Value decreases.",
+            "The Future Value remains exactly unchanged.",
+            "The Future Value drops to equal the original present value baseline."
+        ],
+        "correct": 0,
+        "explanation": "More frequent compounding intervals generate interest on previously accumulated interest sooner within the year, driving up the effective interest rate and increasing the total terminal Future Value."
+    },
+    {
+        "question": "An investor wants to find the Present Value of a perpetual cash inflow of ₹5,000 per annum that grows at a constant rate of 4% indefinitely. If the required rate of return is 9%, what is the present value of this growing perpetuity?",
+        "options": [
+            "₹55,556",
+            "₹125,000",
+            "₹100,000",
+            "₹38,461"
+        ],
+        "correct": 2,
+        "explanation": "Applying the constant growth perpetuity formula: PV = C / (r - g). Substituting the given values: PV = 5,000 / (0.09 - 0.04) = 5,000 / 0.05 = ₹100,000."
+    },
+    {
+        "question": "If a corporate investment proposal offers a nominal annual interest rate of 12% compounded monthly, what is the Effective Annual Rate (EAR) generated by the asset?",
+        "options": [
+            "Exactly 12.00%",
+            "Approximately 12.68%",
+            "Approximately 13.10%",
+            "Exactly 11.44%"
+        ],
+        "correct": 1,
+        "explanation": "Using the Effective Annual Rate formula: EAR = (1 + r/m)^m - 1. Here, the monthly rate is 1% (0.12 / 12), compounded over 12 periods: (1 + 0.01)^12 - 1 = (1.01)^12 - 1 ≈ 12.68%."
+    },
+    {
+        "question": "Consider the following technical statements regarding the time value of money, discount rates, and returns:\n\n(i) A higher discount rate increases the Present Value of future cash flows.\n(ii) The Internal Rate of Return (IRR) is the explicit discount rate that equates the Net Present Value (NPV) of a project to zero.\n(iii) Inflation erodes the purchasing power of money over time, which supports the positive time preference for holding cash today.\n(iv) The Present Value of an annuity due is always lower than the Present Value of an otherwise identical ordinary annuity.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (ii)",
+            "Only (ii) and (iii)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 1,
+        "explanation": "Statement (i) is incorrect because higher discount rates decrease present values. Statement (iv) is incorrect because an annuity due receives cash flows earlier, giving it a higher present value. Statements (ii) and (iii) are factually accurate."
+    },
+           {
+        "question": "Which of the following capital budgeting appraisal methods is explicitly classified as a non-discounting (traditional) technique?",
+        "options": [
+            "Net Present Value (NPV) Method",
+            "Internal Rate of Return (IRR) Method",
+            "Payback Period Method",
+            "Profitability Index (PI) Method"
+        ],
+        "correct": 2,
+        "explanation": "The Payback Period method simply calculates the time required to recover the initial investment outlays from nominal cash inflows without discounting those cash flows to account for the time value of money."
+    },
+    {
+        "question": "When evaluates independent investment proposals using the Net Present Value (NPV) criteria, what is the clear statutory decision rule for project acceptance?",
+        "options": [
+            "Accept the project if the NPV is exactly equal to the initial investment outflow.",
+            "Accept the project if the NPV is greater than or equal to zero.",
+            "Accept the project only if the NPV matches the company's internal accounting rate of return.",
+            "Accept the project if the NPV is strictly negative."
+        ],
+        "correct": 1,
+        "explanation": "An NPV greater than or equal to zero implies that the investment project is expected to recover its initial outlays, satisfy the firm's required rate of return, and maintain or enhance shareholder wealth."
+    },
+    {
+        "question": "Which of the following scenarios best exemplifies a 'Strategic Investment Decision' rather than a tactical one?",
+        "options": [
+            "Purchasing routine spare parts to service an active assembly line escalator asset.",
+            "Acquiring a major competitor's manufacturing framework to enter an entirely new regional market.",
+            "Upgrading local administrative desktop computers to improve daily ledger printing speed.",
+            "Replacing a broken conveyor belt asset under routine maintenance schedules."
+        ],
+        "correct": 1,
+        "explanation": "Strategic investment decisions involve substantial capital commitments, carry high risk profiles, alter the long-term direction of the business enterprise, and are generally irreversible."
+    },
+    {
+        "question": "A firm faces capital constraints and can invest a maximum of ₹1,500,000 this fiscal year. It must choose among several divisible projects to maximize total value. Which capital budgeting metric is most efficient to utilize under these constraints?",
+        "options": [
+            "Accounting Rate of Return (ARR)",
+            "Payback Period",
+            "Profitability Index (PI)",
+            "Internal Rate of Return (IRR)"
+        ],
+        "correct": 2,
+        "explanation": "Under capital rationing with divisible projects, ranking assets based on the Profitability Index (PV of Cash Inflows / Initial Outflow) ensures that the firm maximizes the net value generated per dollar of scarce capital spent."
+    },
+    {
+        "question": "If a project's Net Present Value (NPV) evaluates to exactly zero, what does this imply about the project's Profitability Index (PI) and its Internal Rate of Return (IRR)?",
+        "options": [
+            "PI is equal to 0, and IRR is equal to 0%.",
+            "PI is equal to 1, and IRR is equal to the cost of capital.",
+            "PI is greater than 1, and IRR is lower than the cost of capital.",
+            "PI is equal to 1, and IRR is exactly 0%."
+        ],
+        "correct": 1,
+        "explanation": "When NPV = 0, the present value of cash inflows exactly balances the initial outflow, yielding a PI of 1. Consequently, the project's internal yield rate matches the discount rate (cost of capital) used in the calculation."
+    },
+    {
+        "question": "What is the primary technical cause behind the structural conflict between the NPV and IRR methods when ranking mutually exclusive investment proposals?",
+        "options": [
+            "NPV assumes cash flows are reinvested at the project's IRR, while IRR assumes reinvestment at the cost of capital.",
+            "NPV assumes cash flows are reinvested at the market inflation rate, while IRR assumes no reinvestment at all.",
+            "NPV assumes cash flows are reinvested at the cost of capital, while IRR assumes reinvestment at the project's own IRR.",
+            "NPV calculates returns using nominal figures, while IRR works exclusively with non-monetary utility functions."
+        ],
+        "correct": 2,
+        "explanation": "The ranking conflict arises from differing reinvestment rate assumptions. The NPV framework assumes intermediate inflows are scaled at the firm's cost of capital, which is realistic, whereas IRR assumes scaling at the project's internal rate."
+    },
+    {
+        "question": "Evaluate the following technical statements regarding Capital Budgeting appraisal methods:\n\n(i) The Net Present Value method accounts for the time value of money and evaluates the entire economic life of a project.\n(ii) The Accounting Rate of Return (ARR) uses accounting net profits rather than project cash flows.\n(iii) The Internal Rate of Return (IRR) can yield multiple values if a project exhibits non-conventional cash flow sequences.\n(iv) The Payback Period completely ignores cash flows generated after the initial cost recovery point.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (ii)",
+            "Only (i), (ii), and (iv)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 3,
+        "explanation": "All four statements are accurate. NPV tracks full duration timelines; ARR uses bookkeeping accounting profit instead of liquid cash flows; alternating sign changes (+/-) in cash flows yield multiple IRRs; and payback cuts off observations past recovery points."
+    },
+    {
+        "question": "Consider the following statements regarding 'Capital Rationing' and 'Factors Affecting Capital Investment Decisions':\n\n(i) Hard capital rationing is caused by internal policy constraints imposed by executive management.\n(ii) Market regulations, corporate tax rates, and depreciation policies are key external factors affecting investment choices.\n(iii) Soft capital rationing relates to external funding limitations driven by capital market imperfections.\n(iv) A project with a higher risk profile requires a higher hurdle or discount rate during appraisal evaluations.\n\nWhich of the statements given above are INCORRECT?",
+        "options": [
+            "Only (i) and (iii)",
+            "Only (ii) and (iv)",
+            "Only (i), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 0,
+        "explanation": "Statements (i) and (iii) are incorrect because their definitions are inverted. Hard capital rationing is driven by external market constraints (e.g., lenders refusing debt), while soft rationing stems from internal management choices (e.g., budget limits)."
+    }, 
+            
+            {
+                question: "What is the legal status and ownership structure of the Goods and Services Tax Network (GSTN) in its current operational form?",
+                options: ["A private limited company owned entirely by commercial banks", "A 100% Government-owned Section 8 non-profit company", "A statutory body established by an Act of Parliament like the RBI", "A joint venture where the private sector holds a 51% majority stake"],
+                correct: 1,
+                explanation: "Though initially setup with private equity components, the Union Cabinet approved the restructuring of GSTN to convert it into a 100% government-owned company, with 50% equity held by the Central Government and 50% collectively held by State Governments."
+            },
+            {
+        "question": "Which of the following components is explicitly classified as a core constituent of an entity's 'Gross Working Capital'?",
+        "options": [
+            "Long-term Corporate Bonds",
+            "Total Current Assets",
+            "Paid-up Equity Capital",
+            "Accumulated Depreciation Reserves"
+        ],
+        "correct": 1,
+        "explanation": "Gross Working Capital represents the total financial resources invested in an entity's short-term assets. It is equivalent to the aggregate sum of all Current Assets, such as cash, receivables, and inventory."
+    },
+    {
+        "question": "Which basic financial formula represents the structural determination of 'Net Working Capital'?",
+        "options": [
+            "Total Assets - Total Liabilities",
+            "Fixed Assets + Long-term Debt",
+            "Current Assets - Current Liabilities",
+            "Gross Revenue - Operating Expenses"
+        ],
+        "correct": 2,
+        "explanation": "Net Working Capital measures short-term liquidity and operations efficiency by finding the surplus of Current Assets over Current Liabilities (Current Assets minus Current Liabilities)."
+    },
+    {
+        "question": "An enterprise whose earnings are consistently insufficient to yield a fair return on the total aggregate amount of its issued stock and debt obligations is said to be experiencing which structural condition?",
+        "options": [
+            "Over-capitalization",
+            "Under-capitalization",
+            "Optimum Capitalization",
+            "Working Capital Deflation"
+        ],
+        "correct": 0,
+        "explanation": "Over-capitalization occurs when a company's real earning capacity cannot justify the total value of its capitalized stock and debt liabilities, leading to lower dividend payouts and depressed share values."
+    },
+    {
+        "question": "Which type of financial leverage configuration carries the lowest structural risk profile for a company experiencing highly volatile and unpredictable operating profits?",
+        "options": [
+            "A high-geared capital structure heavily reliant on fixed-interest debt bonds.",
+            "A structure composed entirely of equity shares with zero fixed-cost debt commitments.",
+            "A structure relying exclusively on short-term bank credit overdrafts.",
+            "A highly leveraged combination of preferred shares and debentures."
+        ],
+        "correct": 1,
+        "explanation": "When operating profits (EBIT) are volatile, carrying fixed financial obligations (like interest payouts) introduces default risks. An all-equity structure carries the lowest financial risk because dividends are discretionary."
+    },
+    {
+        "question": "How does a highly capital-intensive manufacturing firm's 'Fixed Capital' requirement typically compare to that of a fast-moving software-as-a-service (SaaS) trading firm?",
+        "options": [
+            "The manufacturing firm requires significantly lower fixed capital due to rapid asset turnover.",
+            "Both firms require identical fixed capital outlays due to standardized corporate law regulations.",
+            "The manufacturing firm requires significantly higher fixed capital to build long-term production plants and infrastructure.",
+            "The SaaS firm requires higher fixed capital because digital code counts as an extensive physical asset."
+        ],
+        "correct": 2,
+        "explanation": "Fixed Capital represents investments in long-term assets. Capital-intensive operations require extensive investments in physical plants, land, and heavy machinery, whereas service firms operate with lighter footprints."
+    },
+    {
+        "question": "According to the Net Income (NI) Approach of capital structure theory, how do changes in financial leverage affect the Weighted Average Cost of Capital (WACC) and the total value of the firm?",
+        "options": [
+            "Increasing debt leverage increases WACC and decreases the total value of the firm.",
+            "Increasing debt leverage has zero impact on both WACC and total firm value.",
+            "Increasing debt leverage decreases WACC and increases the total value of the firm.",
+            "Decreasing debt leverage minimizes equity risks, lowering the firm's cost of capital to zero."
+        ],
+        "correct": 2,
+        "explanation": "The Net Income Approach assumes that debt is cheaper than equity and that the risk perception of investors remains unchanged. Therefore, increasing cheaper debt reduces overall WACC and raises total firm value."
+    },
+    {
+        "question": "If a firm operates with an optimal capital structure, what is the status of its Weighted Average Cost of Capital (WACC) and its aggregate market valuation?",
+        "options": [
+            "WACC is maximized, and the total market value of the firm is minimized.",
+            "WACC is minimized, and the total market value of the firm is maximized.",
+            "WACC matches the nominal bank interest rate, and firm valuation becomes static.",
+            "WACC drops to absolute zero, and equity risk premium disappears completely."
+        ],
+        "correct": 1,
+        "explanation": "The optimal capital structure represents the specific blend of debt and equity that minimizes the company's overall cost of capital (WACC) while maximizing its market valuation and shareholder wealth."
+    },
+    {
+        "question": "A firm needs to estimate its capital requirements for the next fiscal period. Which forecasting method organizes this projection by directly tracing the historical mathematical link between sales growth and asset increases?",
+        "options": [
+            "The Capital Asset Pricing Model (CAPM)",
+            "The Percent of Sales Method",
+            "The Operating Leverage Multiplier",
+            "The Trend Analysis Payback Method"
+        ],
+        "correct": 1,
+        "explanation": "The Percent of Sales Method estimates future financing requirements by assuming that key balance sheet line items (like receivables and inventory) vary directly with the firm's projected sales volumes."
+    },
+    {
+        "question": "Consider the following statements regarding Fixed Capital, Working Capital, and Capitalization theories:\n\n(i) Seasonal variations heavily dictate short-term working capital adjustments, whereas fixed capital requirements depend fundamentally on the long-term technical nature of the industry.\n(ii) Under-capitalization is structurally characterized by exceptionally high earnings per share and high market values relative to the firm's small nominal capital footprint.\n(iii) The total duration of the business operating cycle is inversely proportional to net working capital requirements.\n(iv) Core fixed capital infrastructure is primarily funded through short-term commercial papers and bank cash credit instruments.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (ii)",
+            "Only (i) and (iii)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 0,
+        "explanation": "Statements (i) and (ii) are factually accurate. Statement (iii) is incorrect because longer operating cycles lock up resources over extended periods, thereby increasing (not lowering) working capital demands. Statement (iv) is incorrect because permanent fixed capital requires long-term funding structures (equity/debentures), never volatile short-term commercial banking facilities."
+    },
+    {
+        "question": "Evaluate the following statements concerning Patterns of Capital Structure and financial planning:\n\n(i) A high-geared corporate capital structure features a structurally low proportion of fixed-income securities relative to its baseline equity capital pool.\n(ii) Comprehensive financial planning strictly involves estimating total capital requirements upfront and defining capital deployment policies ahead of operations.\n(iii) The financial mechanism of 'Trading on Equity' is deployed specifically to amplify earnings per share by introducing low-cost fixed-interest debt components.\n(iv) According to the Pecking Order Theory, firms prefer issuing new public equity capital over using internal retained earnings pools.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (iii)",
+            "Only (ii) and (iii)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 1,
+        "explanation": "Statements (ii) and (iii) are correct. Statement (i) is false because a high-geared setup carries a high proportion of fixed-income liabilities relative to equity capital. Statement (iv) is false because the Pecking Order Theory mandates that firms strongly prioritize internal retained earnings first, followed by low-risk debt, and treat new public equity strictly as a defensive last resort."
+    },
+    {
+        "question": "Which of the following short-term financial instruments is specifically utilized by corporate entities to bridge the temporal gap between the expiration of one long-term facility and the securing of another, or to cover immediate floatation costs before long-term funds are raised?",
+        "options": [
+            "Syndicated Term Loans",
+            "Bridge Finance",
+            "Participating Preferred Shares",
+            "Deep Discount Bonds"
+        ],
+        "correct": 1,
+        "explanation": "Bridge Finance refers to short-term loan arrangements engineered to provide immediate cash flow to meet urgent corporate requirements or floatation expenses while permanent long-term funding or equity issuance is being finalized."
+    },
+    {
+        "question": "In a formal book-building mechanism for pricing a public issue of shares, what is the statutory designation given to the price range within which investors can submit bids?",
+        "options": [
+            "Floor Margin Price",
+            "Price Band",
+            "Cut-off Premium Value",
+            "Par Strike Target"
+        ],
+        "correct": 1,
+        "explanation": "During the book-building process, the issuer provides a 'Price Band' consisting of a Floor Price (minimum) and a Cap Price (maximum) within which institutional and retail bidders must submit their pricing bids."
+    },
+    {
+        "question": "Which type of financial institution specializes in providing early-stage, high-risk equity funding to innovative startups that lack access to public capital markets but display exponential growth potential?",
+        "options": [
+            "Factoring Houses",
+            "Venture Capital Institutions",
+            "Commercial Syndication Banks",
+            "Discount Houses"
+        ],
+        "correct": 1,
+        "explanation": "Venture Capital institutions provide equity or quasi-equity funding to early-stage, seed, or high-potential startup companies carrying high risk profiles alongside substantial long-term scalability."
+    },
+    {
+        "question": "What is the primary operational mechanism behind a 'Without Recourse' factoring arrangement?",
+        "options": [
+            "The factor collects invoices but passes the complete risk of customer default back to the client firm.",
+            "The client firm remains completely liable to reimburse the factor if trade debtors fail to pay.",
+            "The factoring institution assumes the entire credit risk of debtor defaults, absorbing financial losses if invoices remain unpaid.",
+            "The arrangement deals exclusively with purchasing long-term debentures rather than trade receivables."
+        ],
+        "correct": 2,
+        "explanation": "In a 'Without Recourse' factoring contract, the factoring agency completely takes over the credit risk. If the trade customers default on their payments, the factor cannot claim reimbursement from the client firm."
+    },
+    {
+        "question": "Under a formal structured 'Loan Syndication' arrangement, what is the primary role performed by the designated Lead Manager or Arranger bank?",
+        "options": [
+            "The Lead Manager acts as the sole provider of the entire credit facility, fully absorbing the risk profile alone.",
+            "The Lead Manager conducts due diligence, structures the commercial terms, and recruits a consortium of participating financial institutions to share the credit layout.",
+            "The Lead Manager is legally responsible for paying off the loan if the corporate borrower defaults.",
+            "The Lead Manager acts exclusively as an external credit rating agency to issue statutory grading metrics."
+        ],
+        "correct": 1,
+        "explanation": "In loan syndication, the Lead Arranger or Manager organizes the facility by appraising the loan, structuring terms, and under-writing or coordinating with a network of other banks to collectively fund the borrower."
+    },
+    {
+        "question": "How do open-ended mutual fund schemes fundamentally differ from closed-ended mutual fund schemes regarding subscription flexibility and liquidity?",
+        "options": [
+            "Open-ended funds can only be bought during the initial public offering window, whereas closed-ended funds are open indefinitely.",
+            "Open-ended funds allow ongoing subscriptions and redemptions at Net Asset Value (NAV) linked prices, while closed-ended funds feature a fixed capital base and are traded on stock exchanges.",
+            "Closed-ended funds guarantee an absolute fixed rate of return, whereas open-ended funds are entirely non-regulated.",
+            "Open-ended funds operate exclusively within money markets, while closed-ended funds belong strictly to venture capital frameworks."
+        ],
+        "correct": 1,
+        "explanation": "Open-ended mutual funds do not have a fixed maturity date and allow constant buying and selling at current NAV prices. Closed-ended funds issue a fixed number of units that are listed on stock exchanges for trading."
+    },
+    {
+        "question": "Consider the following statements regarding Debentures, Bond Financing, and Financial Institutions:\n\n(i) Convertible debentures grant holders the statutory option to convert their debt holdings into equity shares after a specified timeline.\n(ii) Secured debentures create a charge over the asset infrastructure of the issuing corporate enterprise.\n(iii) Unlike equity dividends, debenture interest is an optional distribution dependent entirely on annual accounting profits.\n(iv) A 'Floating Charge' debenture secures a permanent claim over a specific, identifiable physical property like a corporate headquarters building.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (ii)",
+            "Only (i) and (iii)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 0,
+        "explanation": "Statements (i) and (ii) are factually accurate. Statement (iii) is incorrect because debenture interest is a charge against profits and must be paid regardless of whether the firm makes a profit. Statement (iv) is incorrect because a floating charge covers shifting/dynamic assets (like stock or receivables), whereas a fixed charge secures specific properties."
+    },
+    {
+        "question": "Evaluate the following technical statements concerning Financial Markets, Security Financing, and specialized institutions:\n\n(i) Money markets deal exclusively with long-term capital assets carrying a maturity structure exceeding one year.\n(ii) Mutual fund asset management companies hold investor funds in a fiduciary trust setup managed by professional fund managers.\n(iii) Factoring institutions specialize in unlocking working capital liquidity by purchasing and managing trade receivables.\n(iv) In a book-building issuance, the ultimate clearing price determined by investor demand bidding is known as the 'Strike Price' or 'Cut-off Price'.\n\nWhich of the statements given above are correct?",
+        "options": [
+            "Only (i) and (ii)",
+            "Only (iii) and (iv)",
+            "Only (ii), (iii), and (iv)",
+            "All of the above"
+        ],
+        "correct": 2,
+        "explanation": "Statements (ii), (iii), and (iv) are correct. Statement (i) is fundamentally incorrect because money markets deal strictly with short-term financial instruments carrying maturity lifespans up to one year (e.g., T-Bills, Commercial Paper), while long-term financing belongs to capital markets."
+    },
+    {
+    question: "An Assistant Audit Officer (AAO) reviewing a corporate balance sheet notes an issuance of Commercial Papers (CP). Under RBI guidelines, what is the mandatory minimum credit rating and standard maturity range allowed for a corporate entity issuing CPs in the Indian money market?",
+    options: [
+        "Minimum rating of A3; maturity range between 7 days to 1 year",
+        "Minimum rating of A2; maturity range between 15 days to 6 months",
+        "Minimum rating of A1; maturity range between 30 days to 2 years",
+        "Minimum rating of A4; maturity range between 3 days to 90 days"
+    ],
+    correct: 0,
+    explanation: "Under Reserve Bank of India (RBI) money market directions, Commercial Paper (an unsecure, short-term debt instrument) must possess a minimum credit rating of A3 (as per the rating scale of agencies like CRISIL/ICRA) and can be issued for a maturity maturity period ranging from a minimum of 7 days to a maximum of 1 year."
+},
+{
+    question: "During a performance audit of a financial institution's asset liability ledger, the audit team reviews a 'Securitization of Debt' arrangement. What is the explicit role of the Special Purpose Vehicle (SPV) in this structure?",
+    options: [
+        "To directly underwrite the primary corporate equity shares in international markets.",
+        "To purchase illiquid financial assets from the originator, bundle them into pools, and issue asset-backed securities (ABS) to investors, keeping them completely off the originator's balance sheet.",
+        "To act as a central clearinghouse ensuring daily mark-to-market margin adjustments.",
+        "To provide a corporate guarantee to the central government for long-term loan repayments."
+    ],
+    correct: 1,
+    explanation: "Securitization involves turning illiquid assets (like mortgages or auto loans) into liquid securities. The Special Purpose Vehicle (SPV) is a distinct legal entity that buys these loans from the originating bank, isolates the risk, pools them together, and converts them into tradeable securities sold to institutional investors."
+},
+{
+    question: "A company plans to raise capital internationally using Global Depository Receipts (GDRs). Which statement accurately highlights the currency mechanics and regulatory framework governing GDRs?",
+    options: [
+        "GDRs are denominated in Indian Rupees (INR) but are traded on domestic stock exchanges.",
+        "GDRs are equity instruments issued by a local depositary bank to foreign investors without any underlying equity backing.",
+        "GDRs are negotiable certificates issued by an overseas depositary bank representing underlying shares of a domestic company, denominated in a foreign currency like US Dollars, and traded on international exchanges like Luxembourg or London.",
+        "GDRs are debt instruments that convert automatically into government bonds upon global macro-economic shifts."
+    ],
+    correct: 2,
+    explanation: "GDRs allow domestic Indian corporations to tap global equity markets. A domestic custodian holds the shares in India, while an overseas depository bank issues the receipts (denominated in foreign currency, usually USD) to global investors, trading on foreign exchanges like the London Stock Exchange."
+},
+{
+    question: "An investor purchases a European Call Option with a strike price of ₹450 on a specific stock. On the final expiration date, the underlying spot price of the stock closes at ₹485. If the initial option premium paid was ₹15, what is the absolute intrinsic value and the net profit/loss achieved by the option holder?",
+    options: [
+        "Intrinsic Value = ₹0; Net Loss = ₹15",
+        "Intrinsic Value = ₹35; Net Profit = ₹20",
+        "Intrinsic Value = ₹50; Net Profit = ₹35",
+        "Intrinsic Value = ₹20; Net Profit = ₹5"
+    ],
+    correct: 1,
+    explanation: "Intrinsic value of a Call option is Max(Spot Price - Strike Price, 0). Here, ₹485 - ₹450 = ₹35. The net profit is calculated by deducting the premium paid from the intrinsic value: ₹35 - ₹15 = ₹20 profit."
+},
+{
+    question: "A revenue auditor wants to evaluate risk differences in derivative instruments. Which of the following represents a structural operational characteristic unique to a Futures Contract compared to a standard Forward Contract?",
+    options: [
+        "Futures are highly customized contracts traded directly over-the-counter (OTC).",
+        "Futures carry high counterparty default risk because they do not utilize a clearinghouse framework.",
+        "Futures are standardized contracts traded on regulated exchanges, requiring daily mark-to-market margin settlements managed by a central clearinghouse, significantly eliminating default risk.",
+        "Futures are completely settled only on the final maturity date without any interim margin tracking loops."
+    ],
+    correct: 2,
+    explanation: "Forward contracts are custom, bilateral agreements traded Over-The-Counter (OTC) with significant counterparty risk settled at maturity. Futures contracts are standardized, traded on public exchanges, and feature a clearinghouse that enforces daily margin matching (marking-to-market) to eradicate default exposures."
+},
+{
+    question: "Company X has a floating-rate debt obligation linked to MIBOR, but prefers a fixed-rate commitment. Company Y has a fixed-rate commitment but wants to take advantage of falling interest rates via floating exposure. What specific derivative arrangement should they utilize to swap their payment streams directly?",
+    options: [
+        "Credit Default Swap (CDS)",
+        "Interest Rate Swap (IRS)",
+        "Currency Option Contract",
+        "Equity Forward Agreement"
+    ],
+    correct: 1,
+    explanation: "An Interest Rate Swap (IRS) is a derivative contract where two counterparties exchange interest payment streams based on a specified notional principal amount—typically swapping a fixed-rate stream for a floating-rate stream to manage asset liability gaps."
+},
+{
+    question: "Under standard commercial framework guidelines, which structural condition characterizes a 'Finance Lease' (Capital Lease) from the perspective of an asset auditor?",
+    options: [
+        "The lease period covers less than 10% of the useful asset life, and all operational risks remain with the lessor.",
+        "The lease transfers substantially all the risks and rewards incidental to ownership of the asset to the lessee, and the lease term usually covers the major part of the economic life of the asset.",
+        "The lessee can cancel the agreement at any point without financial penalties.",
+        "The lessor is legally responsible for maintaining, insuring, and operating the asset during the daily contract window."
+    ],
+    correct: 1,
+    explanation: "A Finance Lease is non-cancellable and transfers virtually all real-world ownership risks and operational rewards to the lessee. Over its duration, the lease payments allow the lessor to recover full capital outlays plus profit, functioning essentially as a structured loan secured by property."
+},
+{
+    question: "How does a standard Operating Lease fundamentally differ from a Finance Lease agreement?",
+    options: [
+        "Operating leases are always non-cancellable and cover the entire economic lifespan of the hardware.",
+        "Operating leases do not transfer ownership risks; the lease term is relatively short, the agreement can often be cancelled, and the lessor handles maintenance costs.",
+        "Operating leases are exclusively utilized for buying land property plots.",
+        "Operating leases completely transfer asset depreciation rights away from the lessor's tax filing ledger."
+    ],
+    correct: 1,
+    explanation: "Operating leases are short-term, flexible rentals (e.g., leasing an aircraft or a photocopier for a few months/years). Obsolescence risks remain with the lessor, the contract can be cancelled with notice, and the lessor usually bears maintenance responsibilities."
+},
+{
+    question: "An audit officer checks asset procurement files to understand the operational difference between a Hire Purchase agreement and a Lease Financing structure. Which statement accurately separates the two?",
+    options: [
+        "In a lease, ownership transfers automatically with the first payment, whereas in hire purchase, ownership never transfers.",
+        "In a lease, the user (lessee) capitalizes the full asset equity immediately at zero cost.",
+        "In a hire purchase agreement, the hirer pays down structural installments with the explicit intent and statutory right to acquire full legal ownership upon the final payment; in a lease, the lessee pays for usage rights, and asset title remains with the lessor unless a separate buyout clause is executed.",
+        "Hire purchase deals strictly carry zero interest calculations, unlike lease setups."
+    ],
+    correct: 2,
+    explanation: "Hire Purchase is a dual-purpose transaction meant to facilitate ultimate purchase: the user pays installments and automatically inherits absolute legal title when the final payment drops. In standard leasing, the core intent is asset utility/rental; ownership remains firmly with the leasing company (lessor) throughout."
+},
+{
+    question: "A company enters into a specialized transaction where it sells an owned heavy machinery asset to a financial institution for cash and immediately signs an agreement to lease that exact same machinery back to continue factory operations. What is this structural arrangement called?",
+    options: [
+        "Leveraged Lease",
+        "Sale and Leaseback",
+        "Direct Operating Lease",
+        "Sub-lease Agreement"
+    ],
+    correct: 1,
+    explanation: "A Sale and Leaseback arrangement enables companies to instantly unlock tied-up capital from fixed assets (like real estate or factories) by selling them to a financier for immediate liquidity, while maintaining seamless operational usage by leasing the asset back."
+},
+{
+    question: "An Indian exporter expects to receive a payment of USD 100,000 from a US buyer exactly 3 months from today. To eliminate the risk of a potential depreciation of the US Dollar against the Indian Rupee (INR) during this period, which exchange risk management strategy should the exporter adopt?",
+    options: [
+        "Buy a USD Call Option",
+        "Enter into a 3-month USD Forward Purchase Contract to sell USD and buy INR",
+        "Enter into a 3-month Currency Swap to pay fixed INR and receive floating MIBOR",
+        "Rely on the Spot Exchange Market on the day of receipt"
+    ],
+    correct: 1,
+    explanation: "An exporter expecting future foreign currency inflows risks losses if that foreign currency depreciates. By locking in a fixed exchange rate today via a Forward Purchase Contract (selling USD/buying INR), the exporter completely eliminates exchange rate volatility risk, matching the cash inflows with a guaranteed conversion value."
+},
+{
+    question: "In the foreign exchange market, if the spot exchange rate for the US Dollar is quoted as USD 1 = ₹84.50 / 84.60, and the 3-month forward premium points are given as 20 / 30, what will be the outright 3-month forward ask (sell) rate for the bank's customer?",
+    options: [
+        "₹84.30",
+        "₹84.70",
+        "₹84.90",
+        "₹84.80"
+    ],
+    correct: 2,
+    explanation: "The initial quote is given as Bid/Ask: ₹84.50 (Bid) / ₹84.60 (Ask). When forward points are ascending (20/30), the forward currency is at a premium, meaning the points must be added to the spot rates. To find the outright forward ask rate: ₹84.60 + 0.30 = ₹84.90. (Conversely, points are subtracted if descending, indicating a discount)."
+},
+{
+    question: "Under which mode of international trade payment does the exporter ship the goods directly to the foreign buyer before any payment is made, bearing the maximum default risk, while the buyer settles the invoice within a mutually agreed credit window (e.g., 30, 60, or 90 days)?",
+    options: [
+        "Letter of Credit (L/C)",
+        "Open Account",
+        "Documentary Collection (DP/DA)",
+        "Advance Payment"
+    ],
+    correct: 1,
+    explanation: "Under an Open Account arrangement, goods are shipped and delivered before payment is due. This method offers the highest level of competitiveness for buyers in global markets but exposes the exporter to extreme credit default and political risks, as it relies entirely on the buyer's creditworthiness and commercial integrity."
+},
+{
+    question: "During an audit of an import compliance ledger, an officer evaluates a transaction secured by an Irrevocable Letter of Credit (L/C). Under the rules of UCP 600, what is the primary legal obligation of the Issuing Bank if the exporter presents fully compliant documents that contain zero discrepancies?",
+    options: [
+        "The issuing bank must pay only after the importer inspects and physically approves the quality of the goods at the destination port.",
+        "The issuing bank assumes a primary, independent commitment to honor the payment, regardless of any underlying disputes between the buyer and the seller regarding the commercial contract.",
+        "The issuing bank acts merely as a collection agent and is not liable if the importer defaults on cash repayments.",
+        "The issuing bank can unilaterally cancel the transaction if domestic market exchange rates turn unfavorable."
+    ],
+    correct: 1,
+    explanation: "A key principle of Letters of Credit (under ICC UCP 600 guidelines) is their documentary autonomy. Banks deal exclusively with documents, not the physical goods or performance contracts. If compliant documents are presented, the Issuing Bank has an absolute statutory obligation to honor the payment, even if the importer goes bankrupt or disputes product quality."
+},
+{
+    question: "An Indian public sector enterprise imports specialized heavy engineering components. The foreign vendor refuses to ship the components without an explicit credit guarantee from a prime global bank, but also demands that a bank in India adds its own payment guarantee to protect against sovereign risk. What specific class of Letter of Credit should be established?",
+    options: [
+        "Revocable Letter of Credit",
+        "Confirmed Letter of Credit",
+        "Transferable Letter of Credit",
+        "Back-to-Back Letter of Credit"
+    ],
+    correct: 1,
+    explanation: "A Confirmed Letter of Credit carries a binding payment guarantee from a second bank (the Confirming Bank, typically a major bank in the exporter's home country) in addition to the guarantee of the Issuing Bank. This completely cushions the exporter against both the default risk of the issuing bank and the political/sovereign risks of the importing country."
+},
+{
+    question: "A domestic trading enterprise engages in international trade using a 'Consignment Sale' arrangement. Which statement correctly identifies the legal ownership and financial risk allocation of the inventory while it sits in the foreign destination country?",
+    options: [
+        "Ownership transfers to the foreign distributor immediately when the cargo leaves the Indian port, but payment is deferred.",
+        "The inventory remains the absolute legal property of the exporter (consignor) until it is successfully sold by the foreign agent (consignee) to an end customer, meaning unsold inventory can be returned to India at the exporter's expense.",
+        "The foreign agent capitalizes the inventory values on their local corporate balance sheet immediately upon arrival.",
+        "The central government of the importing country guarantees absorption of all holding and obsolescence losses automatically."
+    ],
+    correct: 1,
+    explanation: "In a Consignment Sale, the exporter (consignor) retains legal title to the goods while they are stored in the warehouse of the foreign distributor or agent (consignee). The agent only pays the exporter after the goods are actually sold to a final end-buyer. If the goods do not sell, the agent is not obligated to pay and can return the stock, leaving all holding, market down-turn, and damage risks with the exporter."
+},
+{
+    question: "When an international transaction is settled via an electronic Bank Transfer utilizing the SWAP network framework, what does a 'SWIFT MT700' message specify inside standard global banking channels?",
+    options: [
+        "An interbank clean cash fund transfer verification notice",
+        "The official issuance and structural terms of a documentary Letter of Credit",
+        "A daily mark-to-market margin call notification for currency futures transactions",
+        "An international credit rating downgrade alert warning against trade credits"
+    ],
+    correct: 1,
+    explanation: "Within the SWIFT (Society for Worldwide Interbank Financial Telecommunication) message formatting rules, an 'MT700' message is the globally standardized message layout used exclusively by an issuing bank to communicate the legal setup, text, provisos, and financial terms of a documentary Letter of Credit to the advising bank."
+},
+{
+    question: "An international enterprise encounters risk where the absolute accounting value of its foreign-subsidiary assets and liabilities fluctuates on the consolidated corporate balance sheet due to exchange rate changes at the end of the financial calendar year. What distinct class of foreign exchange exposure does this describe?",
+    options: [
+        "Transaction Exposure",
+        "Translation Exposure (Accounting Exposure)",
+        "Economic Exposure (Operational Exposure)",
+        "Sovereign Legal Default Exposure"
+    ],
+    correct: 1,
+    explanation: "Translation exposure is a non-cash, accounting exposure that arises because a multinational corporation must translate the financial statements of its foreign subsidiaries from their local currencies into the home currency of the parent organization to generate consolidated annual financial reports."
+},
+{
+    question: "Which financial mechanism allows an international trade participant to hedge a highly uncertain foreign exchange cash flow by locking in a maximum exchange cost ceiling while preserving the full upside potential to gain if the spot market moves favorably?",
+    options: [
+        "A fixed Forward Outright Contract",
+        "Purchasing a Currency Option Contract",
+        "An Interest Rate Swap arrangement",
+        "Utilizing a strict Open Account payment structure"
+    ],
+    correct: 1,
+    explanation: "Unlike a Forward Contract—which legally locks you into a fixed rate and eliminates all potential gains from favorable market shifts—a Currency Option provides the *right* but not the obligation to execute a trade. The buyer pays an upfront premium to cap their worst-case exposure while remaining completely free to walk away and use the better spot market rate if it works in their favor."
+},
+{
+    question: "An audit manager reviews the mode of payment risk profiles across the global trade infrastructure. Which sequence correctly ranks the modes of payment from the perspective of **MAXIMUM RISK to the exporter** to the **MINIMUM RISK to the exporter**?",
+    options: [
+        "Advance Payment → Letter of Credit → Consignment Sale → Open Account",
+        "Open Account → Consignment Sale → Letter of Credit → Advance Payment",
+        "Consignment Sale → Open Account → Advance Payment → Letter of Credit",
+        "Letter of Credit → Open Account → Consignment Sale → Advance Payment"
+    ],
+    correct: 1,
+    explanation: "From the exporter's standpoint, Open Account carries the highest risk (goods delivered, no asset leverage, payment completely deferred), followed closely by Consignment Sale (goods stored overseas, title retained but payment contingent on resale). A Letter of Credit drastically reduces risk by substituting the buyer's credit with a bank guarantee, and Advance Payment is the absolute safest profile (cash received before dispatch)."
+},
+{
+    question: "During a compliance review of a public tender, an audit officer evaluates the core principles of public procurement. Which principle is explicitly compromised if a procuring entity includes a highly restrictive technical specification that favors a single local supplier without any objective operational justification?",
+    options: [
+        "Principle of Accountability",
+        "Principle of Transparency",
+        "Principle of Equal Opportunity and Non-Discrimination",
+        "Principle of Professionalism"
+    ],
+    correct: 2,
+    explanation: "Public procurement demands that all eligible bidders are treated equally. Tailoring technical specifications to match a specific vendor's profile artificially restricts competition, violating the core principle of non-discrimination and open opportunity."
+},
+{
+    question: "Under standard public procurement guidelines (such as General Financial Rules), which procurement method is legally mandated as the default choice for high-value contracts to ensure maximum transparency and competitive equity?",
+    options: [
+        "Limited Tender Enquiry",
+        "Single Tender Enquiry (Proprietary Article Certificate)",
+        "Open Tender Enquiry (Advertised Competitive Bidding)",
+        "Direct Procurement without Quotations"
+    ],
+    correct: 2,
+    explanation: "Open/Advertised Tender Enquiry is the standard default mechanism for high-value public procurements. It maximizes economy, efficiency, and transparency by inviting competitive bids from all eligible national or international suppliers via public notifications."
+},
+{
+    question: "A public procuring entity decides to black-list and debar a supplier from participating in government contracts for a fixed duration due to established fraud and collusive bidding practices. What is a key administrative requirement to ensure this debarment stands up to legal scrutiny?",
+    options: [
+        "The debarment must be approved by an international trade court.",
+        "The entity must provide the supplier a formal 'Show Cause Notice' and a reasonable opportunity to be heard, conforming to the principles of natural justice.",
+        "Debarment can only be executed if the supplier goes into absolute commercial bankruptcy.",
+        "The debarment duration must be uniformly fixed at 50 years regardless of the offense severity."
+    ],
+    correct: 1,
+    explanation: "Debarment/blacklisting is a serious punitive action that restricts a firm's right to do business. To prevent arbitrary execution, courts mandate that the principles of natural justice must be followed, requiring a formal Show Cause Notice and an opportunity for the supplier to represent their case."
+},
+{
+    question: "Under Section 2(h) of the Indian Contract Act, 1872, what is the precise statutory definition of a valid 'Contract'?",
+    options: [
+        "Any agreement containing a mutual understanding between two corporate entities.",
+        "An agreement enforceable by law.",
+        "A proposal that has been formally acknowledged but lacks consideration.",
+        "A verbal promise witnessed by a notary public."
+    ],
+    correct: 1,
+    explanation: "Section 2(h) of the Indian Contract Act, 1872 states that 'an agreement enforceable by law is a contract'. An agreement only matures into a legally binding contract when it meets the essential conditions outlined under Section 10 (free consent, lawful consideration, competent parties, etc.)."
+},
+{
+    question: "A government official signs a public works contract under the mistaken belief that the pricing guidelines align with the latest revised estimates. However, the mistake was completely one-sided (unilateral) on the government's part regarding a matter of fact. Under Section 22 of the Indian Contract Act, 1872, what is the legal status of this contract?",
+    options: [
+        "The contract becomes automatically void ab initio.",
+        "The contract is not voidable merely because it was caused by one of the parties to it being under a mistake as to a matter of fact.",
+        "The contract is voidable at the sole option of the mistaken party.",
+        "The contract is automatically suspended until modified by a judicial magistrate."
+    ],
+    correct: 1,
+    explanation: "Section 22 explicitly states that a contract is not voidable merely because it was caused by one party being under a mistake as to a matter of fact. A unilateral mistake of fact does not invalidate the agreement, whereas a bilateral mistake of fact by both parties makes a contract void under Section 20."
+},
+{
+    question: "A public contractor fails to complete a road construction project within the contractually stipulated deadline. The contract contains a valid clause specifying a predetermined, reasonable financial penalty per day of delay to compensate for damages. Under Section 74 of the Indian Contract Act, 1872, how are these Liquidated Damages treated?",
+    options: [
+        "The government must prove its actual financial loss in court before recovering any amount.",
+        "The clause is treated as a criminal penalty and is completely unenforceable under civil law.",
+        "The government is entitled to receive reasonable compensation not exceeding the amount so named, whether or not actual damage or loss is proved to have been caused.",
+        "The contract automatically self-terminates, and all previous payments are legally forfeited."
+    ],
+    correct: 2,
+    explanation: "Section 74 removes the complex burden of proving exact actual damage values. If a contract names a sum as liquidated damages, the aggrieved party is entitled to receive a reasonable amount up to that ceiling limit, irrespective of whether actual loss is explicitly calculated or proved."
+},
+{
+    question: "Under Section 56 of the Indian Contract Act, 1872, what happens to a valid public works agreement if the underlying project site becomes permanently inaccessible due to an unprecedented catastrophic environmental shift (Doctrine of Frustration)?",
+    options: [
+        "The contractor must execute the work at an alternate location default assigned by the state.",
+        "The contract becomes void when the act becomes impossible or, by reason of some event which the promisor could not prevent, unlawful.",
+        "The contractor is penalized for non-performance of statutory clauses.",
+        "The contract remains legally active, and performance timelines are extended indefinitely."
+    ],
+    correct: 1,
+    explanation: "Section 56 governs the Doctrine of Frustration or Impossibility of Performance. If an unforeseen event occurs after contract formation that makes performance physically or legally impossible, the contract automatically becomes void, freeing both parties from future execution duties."
+},
+{
+    question: "Under the provisions of the Arbitration and Conciliation Act, 1996, what constitutes a valid 'Arbitration Agreement' under Section 7?",
+    options: [
+        "A verbal consensus between engineers at the construction site.",
+        "An agreement by the parties to submit to arbitration all or certain disputes which have arisen or which may arise between them in respect of a defined legal relationship, which must strictly be in writing.",
+        "A directive issued unilaterally by the chief auditor during inspection.",
+        "A standard clause that can be implied even if completely omitted from the text."
+    ],
+    correct: 1,
+    explanation: "Section 7 mandates that an arbitration agreement must be in writing. It can be in the form of an arbitration clause within a wider contract or in the form of a separate agreement, signed by the parties or contained in an exchange of letters, telex, telegrams, or electronic communications."
+},
+{
+    question: "During a dispute resolution process, one party attempts to challenge an arbitral award in an Indian court. Under Section 34 of the Arbitration and Conciliation Act, 1996, on what specific ground can a court set aside an arbitral award?",
+    options: [
+        "If the court disagrees with the arbitrator's evaluation of minor commercial calculations.",
+        "If the party making the application furnishes proof that a party was under some incapacity, or the arbitral award is in conflict with the public policy of India.",
+        "If the losing party requests a completely fresh trial on matters of fact.",
+        "If the arbitrator's fee structure exceeds the initially estimated budget layout."
+    ],
+    correct: 2,
+    explanation: "Courts will not act as appellate bodies to re-verify everyday contract calculations. Under Section 34, an award can only be set aside under distinct statutory thresholds, such as an invalid agreement, lack of proper notice, an award beyond scope, or conflict with the fundamental public policy of India."
+},
+{
+    question: "What is the key statutory operational distinction between an 'Arbitration' process and a 'Conciliation' process under the Arbitration and Conciliation Act, 1996?",
+    options: [
+        "Arbitration is completely informal, while conciliation involves strict court litigation updates.",
+        "An arbitrator renders a binding decision (Arbitral Award) to resolve the dispute, whereas a conciliator acts as a facilitator to assist the parties in reaching a voluntary, amicable settlement agreement.",
+        "Conciliation decisions are enforceable as criminal warrants, unlike arbitration outcomes.",
+        "There is no difference; both terms are used interchangeably under Part III of the Act."
+    ],
+    correct: 1,
+    explanation: "Arbitration is an adjudicatory process where the neutral third party acts as a judge and issues a final, binding award. Conciliation is a non-adversarial process where the conciliator actively helps the parties talk through disputes to forge their own mutually agreeable settlement text."
+},
+{
+    question: "Under Section 36 of the Arbitration and Conciliation Act, 1996, what is the legal status and enforceability of a final Arbitral Award once the statutory time limit for making an application to set it aside has expired?",
+    options: [
+        "It acts merely as an advisory report and cannot be executed directly.",
+        "It shall be enforced under the Code of Civil Procedure, 1908 in the same manner as if it were a decree of the court.",
+        "It expires automatically after 1 year if not validated by the state assembly.",
+        "It requires a secondary signature from the Union Law Ministry to achieve force of law."
+    ],
+    correct: 1,
+    explanation: "Section 36 establishes high binding authority for arbitral outcomes. Once the 3-month window to challenge the award under Section 34 passes, the arbitral award becomes fully executable across India exactly like a formal civil court decree."
+},
+{
+    question: "A public procuring entity includes a clause stating that in case of disputes, the arbitration proceedings will be conducted in New Delhi. Under the Arbitration and Conciliation Act, 1996, what does this designation legally define?",
+    options: [
+        "The corporate headquarters of the contractor default selection.",
+        "The Place or 'Seat' of arbitration, which determines the exclusive judicial jurisdiction of the courts governing the proceedings.",
+        "A non-binding geographical preference that can be altered by any range officer.",
+        "The statutory location where all raw project documents must be physically stored."
+    ],
+    correct: 1,
+    explanation: "Section 20 allows parties to freely choose the place of arbitration. Designating the 'Seat' or place of arbitration fixes the legal jurisdiction, meaning the courts of that specific location (New Delhi) retain the exclusive power to manage supervisions, interim reliefs, and challenge procedures."
+},
+{
+    question: "Which of the following describes the core objective of 'Bridge Finance' in corporate financial management?",
+    options: [
+        "Long-term funding raised exclusively through public equity issues to clear permanent liabilities.",
+        "Short-term, temporary financing utilized by a company to cover immediate operational expenditures until a major long-term financing package is finalized.",
+        "A permanent sovereign subsidy granted to heavy infrastructure ventures.",
+        "A highly complex derivative contract traded exclusively over-the-counter."
+    ],
+    correct: 1,
+    explanation: "Bridge finance is a transitional mechanism that 'bridges' the gap between the immediate requirement for cash (like initial project mobilization) and the actual arrival of long-term funding (such as a sanctioned term loan or public equity issue)."
+},
+{
+    question: "Under a standard 'Book-Building' mechanism for public share issuance, what is the role of the 'Price Band'?",
+    options: [
+        "A fixed, unalterable single price determined solely by the central bank.",
+        "A range of prices within which investors can place bids for the shares being offered, consisting of a Floor Price and a Cap Price.",
+        "The minimum commission structure guaranteed to underwriter groups.",
+        "The maximum intraday trade movement limit allowed on the secondary exchange."
+    ],
+    correct: 1,
+    explanation: "Book-building is a price-discovery method. Instead of selling shares at a fixed price, the company provides a price band (e.g., ₹450 to ₹475). Investors bid for quantities at various price levels within this range, and the final issue price is calculated based on cumulative demand."
+},
+{
+    question: "In the operations of 'Mutual Funds', what does the term Net Asset Value (NAV) represent?",
+    options: [
+        "The total macro-equity capital initially contributed by the fund sponsor.",
+        "The market value of a single unit of the mutual fund scheme, calculated by dividing the net value of the fund's absolute assets minus liabilities by the total number of outstanding units.",
+        "The historical dividend payout ratio tracked over 10 consecutive financial years.",
+        "The fixed interest premium guaranteed to investors on a monthly baseline."
+    ],
+    correct: 1,
+    explanation: "NAV measures the performance and baseline value of a mutual fund scheme. It is calculated at the close of every business day by aggregating the current market value of all securities held in the portfolio, subtracting any operating liabilities, and dividing the net result by the total units held by investors."
+},
+{
+    question: "Which type of lease agreement explicitly allows the leasing company (lessor) to pass structural asset operational costs, such as maintenance, insurance, and taxes, directly to the user (lessee) under a non-cancellable contract?",
+    options: [
+        "Operating Lease",
+        "Direct Financial Lease",
+        "Sub-lease Arrangement",
+        "Revocable Service Lease"
+    ],
+    correct: 1,
+    explanation: "In a financial lease (capital lease), the transaction functions as a financed acquisition. The contract is non-cancellable, and the lessee assumes virtually all operational responsibilities, including regular maintenance, property taxes, and insurance outlays."
+},
+{
+    question: "An enterprise faces liquidity pressure due to delayed receivables from commercial buyers. It signs an agreement with a specialized financial intermediary to sell its accounts receivable invoices at a discounted cash value, passing on the invoice collection duties. What is this structural financing method?",
+    options: [
+        "Debt Securitization",
+        "Factoring",
+        "Loan Syndication",
+        "Bridge Financing"
+    ],
+    correct: 1,
+    explanation: "Factoring is a financial management arrangement where a business sells its uncollected invoices (receivables) to a third-party financial institution (the factor) at a discount to unlock immediate working capital liquidity, transferring the administrative burden of collection."
+},
+{
+    question: "A high-growth corporate startup with significant long-term potential requires massive capital outlays but faces extreme risk parameters and lacks fixed collateral assets to secure traditional bank loans. Which specialized institution provides equity funding combined with managerial oversight in this environment?",
+    options: [
+        "Commercial Banks under money market credit guidelines",
+        "Venture Capital Institutions",
+        "Factoring Institutions",
+        "Discount and Finance House of India"
+    ],
+    correct: 1,
+    explanation: "Venture Capital (VC) firms bridge the funding gap for early-stage, high-risk, high-reward startups. Unlike traditional lenders who demand collateral security and stable historical profits, VCs inject long-term equity funding and active strategic guidance in exchange for ownership stakes."
+},
+{
+    question: "A large public infrastructure enterprise requires a long-term term loan of ₹1,500 crore. Because the scale of funding exceeds the credit risk exposure limit of a single banking institution, a consortium of multiple commercial banks collaborates to fund distinct tranches of the asset layout under a single master agreement managed by a Lead Arranger. Name this process.",
+    options: [
+        "Debt Securitization",
+        "Book-Building",
+        "Loan Syndication",
+        "Factoring Arrangement"
+    ],
+    correct: 2,
+    explanation: "Loan Syndication involves a group of lenders pooling resources to extend a massive loan facility to a single borrower. This enables individual banks to participate in high-value corporate financings while safely diversifying their default risk exposure boundaries."
+},
+{
+    question: "When an enterprise accesses 'Security Financing' via the issuance of Debentures, what legal relationship is established between the debenture holders and the corporate organization?",
+    options: [
+        "Debenture holders become primary equity owners with voting rights.",
+        "Debenture holders are unsecured trade creditors who only receive payouts if company profits double.",
+        "Debenture holders are lenders and long-term creditors of the company, entitled to receive a fixed rate of interest regardless of the company's profitability.",
+        "Debenture holders become strategic board members with absolute veto powers."
+    ],
+    correct: 2,
+    explanation: "Debentures are debt instruments representing a formal corporate loan. Unlike equity shareholders, debenture holders do not own the company or possess general voting controls; they are institutional creditors entitled to receive regular, fixed-rate interest distributions as a charge against profits."
+},
+{
+    question: "An enterprise operates under a strict 'Capital Rationing' constraint due to internal board mandates that limit total capital expenditure for the financial year. The financial manager needs to select a combination of divisible, independent projects that maximizes overall shareholder wealth. Which appraisal metric should the manager use to rank these projects?",
+    options: [
+        "Absolute Net Present Value (NPV)",
+        "Internal Rate of Return (IRR)",
+        "Profitability Index (PI)",
+        "Accounting Rate of Return (ARR)"
+    ],
+    correct: 2,
+    explanation: "When capital is limited (capital rationing) and projects are divisible, projects should be ranked using the Profitability Index (PI = PV of Cash Inflows / Initial Outlay). This measures the absolute value created per unit of currency spent, ensuring the most efficient utilization of a restricted capital pool."
+},
+{
+    question: "Which of the following scenarios best exemplifies a 'Strategic Investment Decision' as opposed to a standard 'Tactical Investment Decision'?",
+    options: [
+        "A manufacturing firm decides to replace an aging conveyor belt component in the factory to maintain current output efficiency.",
+        "A retail company purchases additional routine delivery trucks to support a temporary seasonal surge in local orders.",
+        "An automobile manufacturer commits massive capital funds to establish a brand-new electric vehicle production plant in a foreign market, shifting its primary business model.",
+        "An office manager upgrades corporate desktop computers to a faster processing operating system."
+    ],
+    correct: 2,
+    explanation: "Strategic investment decisions involve substantial capital outlays, possess significant risk profiles, are largely irreversible, and fundamentally alter the company's long-term direction, competitive posture, and business model. Tactical choices, like equipment replacements, focus on short-term efficiency tweaks within the existing business structure."
+},
+{
+    question: "A company evaluates an independent infrastructure project with a projected 5-year operational lifespan. The project generates an absolute Net Present Value (NPV) of ₹45,000 when evaluated at a 10% cost of capital. What does this mathematical outcome indicate to the corporate decision-makers?",
+    options: [
+        "The project will recover its initial capital outlay but fail to cover its ongoing financing costs.",
+        "The project yields an absolute accounting profit margin equivalent to exactly 45% of gross revenues.",
+        "The project covers its initial investment outlay, earns the required 10% rate of return, and adds an additional present value of ₹45,000 to shareholder wealth, indicating it should be accepted.",
+        "The project's internal rate of return is exactly equal to the corporate tax bracket default rate."
+    ],
+    correct: 2,
+    explanation: "A positive NPV indicates that a project is financially viable. It signifies that the present value of the cash inflows exceeds the present value of the cash outflows when discounted at the required hurdle rate, effectively expanding corporate net worth by that absolute surplus amount."
+},
+{
+    question: "During a performance audit of capital budgeting choices, which of the following is identified as a primary theoretical limitation of the standard 'Payback Period' method compared to advanced discounted cash flow techniques?",
+    options: [
+        "It is overly complex to calculate and difficult for non-financial managers to understand.",
+        "It fails to evaluate the liquidity profile or short-term cash recovery capability of a high-risk venture.",
+        "It completely ignores the time value of money (unless the discounted variant is used) and fails to consider any cash inflows generated after the payback baseline has been achieved.",
+        "It relies too heavily on subjective accounting depreciation parameters rather than cash entries."
+    ],
+    correct: 2,
+    explanation: "The standard Payback Period method simply calculates how many years it takes to recover the initial capital outlay. It suffers from two major theoretical flaws: it treats cash flows received in Year 1 and Year 5 as having identical value (ignoring the time value of money), and it completely ignores highly profitable cash streams generated after the payback point is cleared."
+},
+{
+    question: "During a financial analysis of an enterprise, an audit officer notes the following ledger balances: Current Ratio is 2.5:1, Quick Ratio (Liquid Ratio) is 1.5:1, and the Net Working Capital is ₹3,000,000. What is the absolute value of the closing Inventory held by the enterprise?",
+    options: [
+        "₹1,200,000",
+        "₹2,000,000",
+        "₹3,000,000",
+        "₹5,000,000"
+    ],
+    correct: 1,
+    explanation: "1. Working Capital = Current Assets (CA) - Current Liabilities (CL). Given CA/CL = 2.5, so CA = 2.5CL. Substituting this: 2.5CL - CL = ₹3,000,000 -> 1.5CL = ₹3,000,000 -> CL = ₹2,000,000. 2. Since CL = ₹2,000,000, then CA = 2.5 * ₹2,000,000 = ₹5,000,000. 3. Quick Ratio = Quick Assets (QA) / CL = 1.5 -> QA = 1.5 * ₹2,000,000 = ₹3,000,000. 4. Inventory = CA - QA = ₹5,000,000 - ₹3,000,000 = ₹2,000,000."
+},
+{
+    question: "A company's extract of financial statements reveals the following data for the financial year: Credit Sales = ₹2,400,000; Gross Profit Rate = 25% on Cost of Goods Sold (COGS); Opening Inventory = ₹350,000; Closing Inventory = ₹450,000. Calculate the Inventory Turnover Ratio (ITR) for the year.",
+    options: [
+        "4.8 Times",
+        "5.3 Times",
+        "6.0 Times",
+        "4.0 Times"
+    ],
+    correct: 0,
+    explanation: "1. Gross Profit is 25% on Cost ($COGS$). Therefore, Sales = $COGS$ + Profit = $COGS$ + 0.25$COGS$ = 1.25$COGS$. 2. Given Sales = ₹2,400,000, so $COGS$ = ₹2,400,000 / 1.25 = ₹1,920,000. 3. Average Inventory = (Opening Inventory + Closing Inventory) / 2 = (₹350,000 + ₹450,000) / 2 = ₹400,000. 4. Inventory Turnover Ratio = $COGS$ / Average Inventory = ₹1,920,000 / ₹400,000 = 4.8 times."
+},
+{
+    question: "While preparing a Cash Flow Statement under AS-3 (Indirect Method), an analyst extracts the following operational parameters: Net Profit After Tax = ₹800,000; Depreciation charged during the year = ₹120,000; Decrease in Accounts Receivable = ₹60,000; Increase in Inventories = ₹90,000; Decrease in Accounts Payable = ₹40,000. What is the Net Cash Generated from Operating Activities?",
+    options: [
+        "₹850,000",
+        "₹930,000",
+        "₹770,000",
+        "₹810,000"
+    ],
+    correct: 0,
+    explanation: "Using the Indirect Method adjustments to Net Profit: 1. Add non-cash expenses (Depreciation): +₹120,000. 2. Add decrease in Current Assets (Receivables): +₹60,000. 3. Subtract increase in Current Assets (Inventories): -₹90,000. 4. Subtract decrease in Current Liabilities (Payables): -₹40,000. Calculation: ₹800,000 + ₹120,000 + ₹60,000 - ₹90,000 - ₹40,000 = ₹850,000."
+},
+{
+    question: "During a Funds Flow Analysis tracking changes in working capital, an enterprise notes the following asset transactions during the financial year: Plant and Machinery with a written down value (WDV) of ₹500,000 was sold for ₹420,000. A new piece of machinery was purchased for ₹1,200,000 cash. What is the net impact of these physical asset changes on the 'Sources' and 'Uses' of funds ledger?",
+    options: [
+        "Source of Funds = ₹500,000; Use of Funds = ₹1,200,000",
+        "Source of Funds = ₹420,000; Use of Funds = ₹1,200,000",
+        "Source of Funds = ₹0; Net Use of Funds = ₹780,000",
+        "Source of Funds = ₹420,000; Use of Funds = ₹780,000"
+    ],
+    correct: 1,
+    explanation: "In Funds Flow Analysis, we track actual inflows and outflows of working capital (cash/liquidity). The actual cash received from the sale of fixed assets constitutes a 'Source of Funds' (₹420,000), regardless of the accounting book loss of ₹80,000 (which is added back to find funds from operations). The actual cash paid out to buy new machinery constitutes a distinct 'Use of Funds' (₹1,200,000)."
+},
+{
+    question: "An individual is promised an annual payment of ₹50,000 at the end of each year for the next 4 years. If the appropriate discount rate reflecting the time preference for money is 10% per annum, what is the absolute present value of this ordinary annuity?",
+    options: [
+        "₹200,000",
+        "₹158,493",
+        "₹174,342",
+        "₹145,210"
+    ],
+    correct: 1,
+    explanation: "The present value of an ordinary annuity is calculated using the formula: $$PV = A \\times \\left[\\frac{1 - (1 + r)^{-n}}{r}\\right]$$ Where $A = 50,000$, $r = 0.10$, and $n = 4$. Substituting the values: $$PV = 50,000 \\times \\left[\\frac{1 - (1.10)^{-4}}{0.10}\\right] = 50,000 \\times 3.16986 = ₹158,493$$"
+},
+{
+    question: "Which of the following statements accurately describes the core behavioral premise behind the 'Time Preference for Money' in financial economics?",
+    options: [
+        "Individuals generally prefer receiving a given sum of money in the future rather than consuming it immediately.",
+        "A sum of money expected in the future holds a higher utility than an identical sum available today due to systemic deflation.",
+        "Individuals prefer current consumption over future consumption of an equal amount due to factors like risk, uncertainty of the future, and investment reinvestment opportunities.",
+        "The nominal value of cash expands automatically over time without compounding intervals."
+    ],
+    correct: 2,
+    explanation: "The time preference for money is the fundamental principle that individuals prefer immediate cash over future cash. This exists because: (1) current consumption carries certainty while the future is risky, (2) inflation erodes purchasing power, and (3) money held today can be reinvested to earn a positive rate of return over time."
+},
+{
+    question: "A business enterprise invests ₹1,000,000 today in a commercial project. The venture yields a single consolidated lump-sum payout of ₹1,440,000 at the end of exactly 2 years. Compounded annually, what is the exact internal Rate of Return (RoR) achieved by this investment?",
+    options: [
+        "22% per annum",
+        "44% per annum",
+        "20% per annum",
+        "15% per annum"
+    ],
+    correct: 2,
+    explanation: "Using the future value formula: $FV = PV \\times (1 + r)^n$. Here, $1,440,000 = 1,000,000 \\times (1 + r)^2$. Dividing both sides: $1.44 = (1 + r)^2$. Taking the square root of both sides gives: $1.2 = 1 + r$, which means $r = 0.20$ or 20% per annum."
+},
+{
+    question: "An Indian corporation imports specialized electronics components from Germany and must settle an invoice of EUR 50,000 in 3 months. To hedge against the risk of the Euro appreciating against the Indian Rupee (INR), which risk management strategy should the finance manager implement?",
+    options: [
+        "Sell Euro in the 3-month Forward Market.",
+        "Buy a 3-month Euro Forward Purchase Contract (Buy EUR / Sell INR).",
+        "Rely entirely on the spot currency market at the time of payment.",
+        "Buy a Put Option on the Euro."
+    ],
+    correct: 1,
+    explanation: "An importer with future foreign currency liabilities faces exchange risk if that foreign currency appreciates. By entering a Forward Purchase Contract today, the importer locks in the exact exchange rate for buying Euros in 3 months, completely eliminating the risk of a rising Euro inflating their domestic currency payout."
+},
+{
+    question: "Under the ICC UCP 600 guidelines governing international trade, which statement accurately reflects the primary legal obligation of an Issuing Bank under a documentary Letter of Credit (L/C)?",
+    options: [
+        "The bank is only liable to pay if the importer inspects and physically verifies the quality of the goods at the port of entry.",
+        "The bank assumes a primary, independent commitment to honor the payment solely upon the presentation of clean, compliant documents, regardless of any underlying contract disputes between the buyer and seller.",
+        "The bank acts as a flexible intermediary and can cancel the L/C unilaterally if the buyer faces cash flow constraints.",
+        "The bank guarantees the financial performance and structural solvency of the exporter."
+    ],
+    correct: 1,
+    explanation: "A foundational principle of a Letter of Credit is the 'Principle of Autonomy.' Banks deal strictly in documents and not in the physical goods or commercial performance to which the documents relate. If the exporter presents fully compliant documents with zero discrepancies, the issuing bank has an absolute obligation to pay."
+},
+{
+    question: "An audit manager is evaluating the risk matrices of international trade settlement methods. Which mode of payment exposes the exporter to the MAXIMUM default and credit risk, while presenting the minimum risk to the foreign buyer?",
+    options: [
+        "Advance Payment",
+        "Confirmed Letter of Credit",
+        "Open Account",
+        "Documentary Collection (Documents Against Payment)"
+    ],
+    correct: 2,
+    explanation: "Under an Open Account arrangement, the exporter ships and delivers the goods directly to the buyer before any payment is made. The buyer typically agrees to pay within a specific credit window (e.g., 30 or 60 days). This exposes the exporter to extreme credit, collection, and political risk since they lose control of the goods without a bank guarantee."
+},
+{
+    question: "A manufacturing firm requires immediate working capital liquidity and decides to utilize a factoring arrangement. If the arrangement is structured as a 'Recourse Factoring' agreement, who legally bears the ultimate risk of bad debts if a trade debtor defaults on an invoice payment?",
+    options: [
+        "The Factoring Institution (Factor)",
+        "The selling enterprise (Client/Exporter)",
+        "The central clearing bank default unit",
+        "The commercial insurers under statutory indemnity"
+    ],
+    correct: 1,
+    explanation: "In Recourse Factoring, the factor does not assume the credit risk associated with the receivables. If a trade debtor fails to pay the invoice due to insolvency or financial distress, the factor has the legal right to assign the bad debt back to the selling enterprise (client), which must absorb the loss."
+},
+{
+    question: "An early-stage enterprise seeks financing from a Venture Capital Institution. During the structuring phase, the venture capitalist notes that the project has cleared the initial seed stage but requires capital to initiate commercial manufacturing and marketing operations before achieving break-even. What stage of venture capital financing does this describe?",
+    options: [
+        "Seed Capital Stage",
+        "Start-up / First-Stage Financing",
+        "Mezzanine / Bridge Financing",
+        "Turnaround Secondary Financing"
+    ],
+    correct: 1,
+    explanation: "Start-up or First-Stage financing is provided to companies that have developed a prototype or completed initial R&D and require funds to launch full-scale commercial production and marketing strategies. Seed capital is for initial basic research/concept development, while mezzanine financing helps prepare for an IPO."
+},
+{
+    question: "An Indian public listed corporation issues Global Depository Receipts (GDRs) in the international capital markets. Which statement accurately outlines the statutory voting rights and financial status of the international GDR investors?",
+    options: [
+        "GDR holders possess direct voting rights in the company's annual general meetings exactly equal to domestic equity shareholders.",
+        "GDR holders are treated as secured debenture creditors with fixed interest payouts.",
+        "GDR holders do not enjoy direct voting rights in the company; instead, the Overseas Depository Bank holding the underlying shares exercises the voting rights on their behalf as per the deposit agreement.",
+        "GDR holders receive voting controls only if the company defaults on dividend distributions."
+    ],
+    correct: 2,
+    explanation: "GDR holders are beneficial owners of the underlying shares but do not hold direct voting rights on the floor of the domestic company's general meetings. The legal title to the underlying shares rests with the Overseas Depository Bank, which exercises the voting blocks on behalf of the GDR holders based on their explicit instructions or the terms of the deposit ledger."
+}
+        ];
+
+        let currentQuestionIndex = 0;
+        let userAnswers = Array(quizData.length).fill(null);
+        let markedForReview = Array(quizData.length).fill(false);
+        let timeRemaining = 7200; // 120 Minutes
+        let timerInterval;
+        let candidateName = "";
+        let candidateRoll = "";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('login-screen-exam-title').innerText = examMainTitle;
+            document.getElementById('login-screen-exam-sub').innerText = examPaperSubtext;
+        });
+
+        // Helper function implementing the Fisher-Yates array shuffling algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startAssessment() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            const rollInput = document.getElementById('student-roll').value.trim();
+
+            if (nameInput === "" || rollInput === "") {
+                alert("Please complete both Candidate Name and Roll Number fields to initialize.");
+                return;
+            }
+
+            candidateName = nameInput;
+            candidateRoll = rollInput;
+
+            // --- 🔀 QUESTION & OPTION SHUFFLING ENGINE LOGIC ---
+            // 1. First shuffle the individual options inside each item block while maintaining index integrity
+            quizData.forEach(q => {
+                // Keep safe tracking references of the correct string asset
+                const correctOptionText = q.options[q.correct];
+                shuffleArray(q.options);
+                // Relocate and assign the new dynamic index point for the correct match
+                q.correct = q.options.indexOf(correctOptionText);
+            });
+            // 2. Next shuffle the question order sequence globally
+            shuffleArray(quizData);
+
+            document.getElementById('header-metadata').innerHTML = `
+                <div class="mt-1 flex flex-col gap-0.5 border-t border-blue-800/60 pt-1">
+                    <p class="text-xs font-bold text-yellow-400 tracking-wide uppercase">${examMainTitle} &nbsp;|&nbsp; ${examPaperSubtext}</p>
+                    <p class="text-[11px] font-medium text-blue-200">Candidate: ${candidateName.toUpperCase()} &nbsp;|&nbsp; Roll No: ${candidateRoll}</p>
+                </div>
+            `;
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-layout').classList.remove('hidden');
+            document.getElementById('header-controls').classList.remove('hidden');
+            document.getElementById('timer-box').classList.remove('hidden');
+
+            document.getElementById('total-q-num').innerText = quizData.length;
+            startTimer();
+            renderQuestion();
+            renderStatusGrid();
+        }
+
+       function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    endQuiz();
+                } else {
+                    timeRemaining--;
+                    // Calculate Hours, Minutes, and Seconds from total remaining seconds
+                    let hours = Math.floor(timeRemaining / 3600).toString().padStart(2, '0');
+                    let mins = Math.floor((timeRemaining % 3600) / 60).toString().padStart(2, '0');
+                    let secs = (timeRemaining % 60).toString().padStart(2, '0');
+                    
+                    // Display in HH:MM:SS format
+                    document.getElementById('timer').innerText = `${hours}:${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            
+            document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('progress-bar').style.width = `${((currentQuestionIndex + 1) / quizData.length) * 100}%`;
+            document.getElementById('question-text').innerText = currentQuestion.question;
+
+            // Update Top Header Review Button State
+            const rBtn = document.getElementById('review-btn');
+            if (markedForReview[currentQuestionIndex]) {
+                rBtn.innerHTML = "⭐ Reviewed!";
+                rBtn.className = "px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded shadow border border-amber-800 transition cursor-pointer";
+            } else {
+                rBtn.innerHTML = "⭐ Mark for Review";
+                rBtn.className = "px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded shadow transition cursor-pointer";
+            }
+
+            // Update Top Header Submit/Next Button Visibility
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            if (currentQuestionIndex === quizData.length - 1) {
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('submit-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('next-btn').classList.remove('hidden');
+                document.getElementById('submit-btn').classList.add('hidden');
+            }
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            currentQuestion.options.forEach((option, idx) => {
+                const isChecked = userAnswers[currentQuestionIndex] === idx ? 'checked' : '';
+                
+                optionsContainer.innerHTML += `
+                    <div class="relative flex items-center">
+                        <input type="radio" name="quiz-option" id="opt-${idx}" value="${idx}" ${isChecked} 
+                               onclick="saveAnswer(${idx})" 
+                               class="custom-radio hidden peer">
+                        <label for="opt-${idx}" class="w-full p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 text-gray-700 font-medium block peer-checked:border-blue-600 peer-checked:bg-blue-50 transition">
+                            <span class="inline-block w-6 h-6 mr-3 text-center rounded-full bg-gray-100 text-gray-500 text-sm font-bold align-middle peer-checked:bg-blue-600">${String.fromCharCode(65 + idx)}</span>
+                            ${option}
+                        </label>
+                    </div>
+                `;
+            });
+        }
+
+        function renderStatusGrid() {
+            const gridContainer = document.getElementById('question-grid');
+            gridContainer.innerHTML = '';
+
+            let attemptedCount = 0;
+            let reviewCount = 0;
+            let unansweredCount = 0;
+
+            quizData.forEach((_, idx) => {
+                let badgeColor = "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"; 
+                let borderStyle = "";
+
+                if (currentQuestionIndex === idx) {
+                    borderStyle = "ring-4 ring-blue-600 ring-offset-1";
+                }
+
+                if (markedForReview[idx]) {
+                    badgeColor = "bg-amber-500 text-white border-transparent hover:bg-amber-600";
+                    reviewCount++;
+                } else if (userAnswers[idx] !== null) {
+                    badgeColor = "bg-blue-600 text-white border-transparent hover:bg-blue-700";
+                    attemptedCount++;
+                } else {
+                    unansweredCount++;
+                }
+
+                gridContainer.innerHTML += `
+                    <button onclick="jumpToQuestion(${idx})" class="w-10 h-10 rounded-lg text-sm font-bold font-mono transition shadow-sm cursor-pointer ${badgeColor} ${borderStyle}">
+                        ${idx + 1}
+                    </button>
+                `;
+            });
+
+            document.getElementById('summary-total').innerText = quizData.length;
+            document.getElementById('summary-attempted').innerText = attemptedCount;
+            document.getElementById('summary-review').innerText = reviewCount;
+            document.getElementById('summary-unanswered').innerText = unansweredCount;
+        }
+
+        function saveAnswer(selectedIdx) {
+            // If the candidate clicks the already active option, deselect it (set to null)
+            if (userAnswers[currentQuestionIndex] === selectedIdx) {
+                userAnswers[currentQuestionIndex] = null;
+            } else {
+                userAnswers[currentQuestionIndex] = selectedIdx;
+            }
+            renderQuestion(); // Re-render to clear or update selection styles immediately
+            renderStatusGrid(); // Update the sidebar assessment matrix grid colors
+        }
+
+        function toggleMarkForReview() {
+            markedForReview[currentQuestionIndex] = !markedForReview[currentQuestionIndex];
+            renderQuestion();
+            renderStatusGrid();
+        }
+
+        function jumpToQuestion(idx) {
+            currentQuestionIndex = idx;
+            renderQuestion();
+            renderStatusGrid();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+                renderStatusGrid();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+                renderStatusGrid();
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(timerInterval);
+            document.getElementById('main-layout').classList.add('hidden');
+            document.getElementById('header-controls').classList.add('hidden');
+            document.getElementById('timer-box').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            document.getElementById('header-metadata').innerHTML = `
+                <p class="text-xs text-blue-200">Assessment Complete Summary Ledger</p>
+            `;
+
+            document.getElementById('candidate-meta').innerText = `Candidate: ${candidateName} | Roll No: ${candidateRoll}`;
+
+            calculateScores();
+        }
+
+        function calculateScores() {
+            let correctCount = 0;
+            let incorrectCount = 0;
+            let unansweredCount = 0;
+
+            quizData.forEach((q, idx) => {
+                if (userAnswers[idx] === q.correct) {
+                    correctCount++;
+                } else if (userAnswers[idx] === null) {
+                    unansweredCount++;
+                } else {
+                    incorrectCount++;
+                }
+            });
+
+            const absoluteScore = (correctCount * 1) - (incorrectCount * 0.25);
+            const accuracy = (correctCount + incorrectCount) > 0 ? Math.round((correctCount / (correctCount + incorrectCount)) * 100) : 0;
+
+            document.getElementById('score-val').innerText = absoluteScore.toFixed(2);
+            document.getElementById('correct-val').innerText = correctCount;
+            document.getElementById('incorrect-val').innerText = incorrectCount;
+            document.getElementById('unanswered-val').innerText = unansweredCount;
+            document.getElementById('accuracy-val').innerText = `${accuracy}%`;
+
+            generateReviewLedger();
+        }
+
+        function generateReviewLedger() {
+            const container = document.getElementById('review-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, idx) => {
+                const userSelection = userAnswers[idx];
+                let statusBadge = `<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold">UNANSWERED</span>`;
+                
+                if (userSelection === q.correct) {
+                    statusBadge = `<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">&check; CORRECT</span>`;
+                } else if (userSelection !== null) {
+                    statusBadge = `<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">&times; INCORRECT</span>`;
+                }
+
+                let optionsListHtml = '';
+                q.options.forEach((opt, oIdx) => {
+                    let styling = "text-gray-600 bg-white border border-gray-100";
+                    if (oIdx === q.correct) {
+                        styling = "bg-emerald-50 text-emerald-900 font-semibold border-l-4 border-l-emerald-500 border border-emerald-100";
+                    } else if (oIdx === userSelection && userSelection !== q.correct) {
+                        styling = "bg-rose-50 text-rose-900 border-l-4 border-l-rose-500 border border-rose-100";
+                    }
+                    optionsListHtml += `<div class="p-3 text-sm rounded-lg ${styling}">${String.fromCharCode(65 + oIdx)}. ${opt}</div>`;
+                });
+
+                container.innerHTML += `
+                    <div class="border-b border-gray-100 pb-6 last:border-b-0 pt-4">
+                        <div class="flex justify-between items-start gap-4 mb-2">
+                            <h4 class="font-bold text-gray-800 text-base whitespace-pre-line">Q${idx + 1}. ${q.question}</h4>
+                            ${statusBadge}
+                        </div>
+                        <div class="space-y-2 my-3">
+                            ${optionsListHtml}
+                        </div>
+                        <div class="bg-blue-50/70 p-4 rounded-xl border border-blue-100/50 text-sm text-blue-950 mt-2">
+                            <strong class="text-blue-800 block mb-1">Audit Solution Ledger:</strong>
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
